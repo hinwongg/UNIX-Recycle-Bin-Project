@@ -1,0 +1,162 @@
+#!/bin/bash
+
+function removeFunction() {
+
+        inputFile=$1
+        file=$(basename $inputFile) #File variable must be in f2 format
+        basenameName=$(basename $inputFile)
+        dirnameName=$(dirname $inputFile)
+        readlinkName=$(readlink -f $inputFile)
+        #Hin forget about basename, dirname, readlink. Only use readlink for testing
+
+        removeDirname=$(dirname remove)
+        removeFilename=$(basename remove)
+        removeReadlink=$(readlink -f remove )
+
+        if [ "$file" = "remove" ] #Create 3 if statements for this process
+        then
+                echo "Attempting to delete remove - operation aborted"
+                exit 1
+        elif [[ $file == *"remove"* ]] #Check if remove is in the /.../.../../ directory name
+        then
+                echo "Attemping to delete remove - operation aborted"
+                exit 1
+        elif [ "$file" = "remove" ] #The var $file is already in basename format so much be "remove"
+        then
+                echo "Attempting to delete remove - operation aborted"
+                exit 1
+        #Only need top 3. Do not need the rest.
+
+        elif [ "$file" = removeDirname ]
+        then
+                echo "Attempting to delete remove - operation aborted"
+                exit 1
+        elif [ "$file" = removeFilename ]
+        then
+                echo "Attempting to delete remove - operation aborted"
+                exit 1
+        elif [ "$file" = removeReadlink ]
+        then
+                echo "Attempting to delete remove - operation aborted"
+                exit 1
+        else
+                #In this spot, just delete the file"
+                :
+        fi
+
+        if [ -e $HOME/deleted ]
+        then
+                #if true then it exists and do not do anything
+                :
+        else
+                mkdir $HOME/deleted
+        fi
+
+        #Phase 1.4
+
+        #This readlinkName will show the entire name $home/project/...../../f1
+        if [ -e $readlinkName ]
+        then
+                :
+        else
+                echo "cannot remove '$inputFile': No such file or directory"
+                exit 1
+        fi
+
+        #Originally, Hin used -f. He changed to -d and now it is not working.
+        if [ -d $readlinkName ] #Test if directory name is provided.
+        then
+                echo "cannot remove '$inputFile': Is a directory"
+                exit 1
+        fi
+
+        #Phase 1.5
+
+        inode=$(ls -i $readlinkName | cut -d" " -f1)
+        mv $readlinkName $basenameName"_"$inode #This part only RENAMES it to _inode format
+        mv $basenameName"_"$inode $HOME/deleted #Move to home directory
+        #Phase 1.6
+
+        echo $basenameName"_"$inode":"$readlinkName >> $HOME/.restore.info #Hin change. Try not to echo it. Or, put quotes around echo
+
+}
+
+
+i_option=0
+v_option=0
+
+if [ $# -eq 0 ]
+then
+        echo "missing operand"
+        exit 1
+fi
+
+
+
+
+for i in $@
+do
+        #Thsi parses the -options and will NOT read them as files
+        if [[ $1 == "-"* ]]
+        then
+                if [[ $1 == *"i"* ]]
+                then
+                        i_option=1
+                fi
+                if [[ $1 == *"v"* ]]
+                then
+                        v_option=1
+                fi
+        shift # This shift will move you out of the "-options" phase! VERY IMPORTANT! And if no -options are given, it will just read the regular files
+        fi
+done
+
+for file in $@
+do
+        if [ $i_option == 1 ] && [ $v_option == 0 ]
+        then
+                echo "remove regular empty file '$file'?"
+                read input
+                if [ $input = "y" ]
+                then
+                        removeFunction $file
+                elif [ $input = "Y" ]
+                then
+                        removeFunction $file
+                elif [ $input = "yes" ]
+                then
+                        removeFunction $file
+                else
+                        :
+                fi
+        fi
+        if [ $i_option == 0 ] && [ $v_option == 1 ]
+        then
+                removeFunction $file
+                echo "removed '$file'echo "
+        fi
+        if [ $i_option == 1 ] && [ $v_option == 1 ]
+        then
+                echo "remove regular empty file '$file'?"
+                read input
+                if [ $input = "y" ]
+                then
+                        removeFunction $file
+                        echo "removed '$file'"
+                elif [ $input = "Y" ]
+                then
+                        removeFunction $file
+                        echo "removed '$file'"
+                elif [ $input = "yes" ]
+                then
+                        removeFunction $file
+                        echo "removed '$file'"
+                else
+                        :
+                fi
+        fi
+        if [ $i_option == 0 ] && [ $v_option == 0 ]
+        then
+                removeFunction $file
+        fi
+done

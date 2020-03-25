@@ -1,0 +1,62 @@
+#!/bin/bash
+
+file=$1
+
+originalLocation=$(cat $HOME/.restore.info | grep "$file" | cut -d":" -f2) #This gives the line in .restore.info WITHOUT the f1_1235 in beginning
+echo $originalLocation
+
+#Phase 1.4
+if [ -e $HOME/deleted/$file ]
+then
+        :
+else
+        echo "File does not exist"
+        exit 1
+fi
+
+if [ $# -eq 0 ]
+then
+        echo "No filename provided"
+        exit 1
+fi
+
+
+#Check existence of file f1 in projects directory.
+#Since original location is the new place (not tested), -e returns true if the matching file exists
+isRestored=0
+if [ -e $originalLocation ]
+then
+        echo "Do you want to overwrite? y/n"
+        read input
+
+        if [ $input = "y" ]
+        then
+                mv $HOME/deleted/$file $originalLocation
+                isRestored=1
+        elif [ $input = "Y" ]
+        then
+                mv $HOME/deleted/$file $originalLocation
+                isRestored=1
+        elif [ $input = "yes" ]
+        then
+                mv $HOME/deleted/$file $originalLocation
+                isRestored=1
+        else
+                :
+        fi
+else
+        #If the file does not already exist, then just move it!!
+        mv $HOME/deleted/$file $originalLocation
+        isRestored=1
+fi
+
+restoreinfoLine=$(cat $HOME/.restore.info | grep "$file") #Gives the FULL restore.info line
+#isRestored equal 1 means that it has been restored
+if [ $isRestored -eq 1 ] #Hin check if you can use $ or "quotes"
+then
+        echo "Entry in restore.info has been deleted"
+        #Grep -v will send everything in .restore.info into tmpFile MINUS the entry to be deleted
+        grep -v "$restoreinfoLine" $HOME/.restore.info > $HOME/tmpFile
+        mv $HOME/tmpFile $HOME/.restore.info
+        #The tmpFile should be GONE after the move
+fi
